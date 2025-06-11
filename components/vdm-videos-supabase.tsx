@@ -35,18 +35,32 @@ export default function VdmVideosSupabase() {
         setLoading(true)
         setError(null)
 
+        console.log("🔍 Starting to fetch videos from vdm_videos table...")
+
         const { data, error: supabaseError } = await supabase
           .from("vdm_videos")
           .select("*")
           .order("published_at", { ascending: false })
 
         if (supabaseError) {
+          console.error("💥 Supabase error:", supabaseError)
           throw supabaseError
         }
 
         if (data) {
-          setVideos(data)
+          console.log("✅ Successfully fetched videos:", data.length)
+          // Filter out videos with invalid or missing video_id
+          const validVideos = data.filter(
+            (video) =>
+              video.video_id &&
+              video.video_id.trim() !== "" &&
+              video.video_id.length >= 10 && // YouTube video IDs are typically 11 characters
+              /^[a-zA-Z0-9_-]+$/.test(video.video_id), // Valid YouTube ID format
+          )
+          console.log("✅ Valid videos after filtering:", validVideos.length)
+          setVideos(validVideos)
         } else {
+          console.warn("⚠️ No data returned from query")
           setVideos([])
         }
       } catch (err: any) {
@@ -54,18 +68,12 @@ export default function VdmVideosSupabase() {
         setError(err.message)
       } finally {
         setLoading(false)
+        console.log("🏁 Fetch operation completed")
       }
     }
 
     fetchVideos()
-  }, [])
-
-  // Remove this function entirely:
-  // const extractVideoId = (url: string) => {
-  //   if (!url) return null
-  //   const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/)
-  //   return match ? match[1] : null
-  // }
+  }, []) // Empty dependency array to prevent re-render loops
 
   // Loading State
   if (loading) {
@@ -119,7 +127,7 @@ export default function VdmVideosSupabase() {
         <div className="text-6xl">📹</div>
         <h2 className="text-2xl font-bold text-foreground">No Videos Found</h2>
         <p className="text-muted-foreground max-w-md mx-auto">
-          No videos are available at the moment. Check back soon for the latest VDM content!
+          No valid videos are available at the moment. Check back soon for the latest VDM content!
         </p>
       </div>
     )
@@ -149,15 +157,37 @@ export default function VdmVideosSupabase() {
               <CardContent className="p-0">
                 {/* Thumbnail */}
                 <div className="relative aspect-video bg-muted overflow-hidden rounded-t-lg">
-                  <img
-                    src={`https://img.youtube.com/vi/${video.video_id}/hqdefault.jpg`}
-                    alt={video.title || "Video thumbnail"}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.src = `https://img.youtube.com/vi/${video.video_id}/maxresdefault.jpg`
-                    }}
-                  />
+                  {video.video_id && video.video_id.trim() !== "" ? (
+                    <img
+                      src={`https://img.youtube.com/vi/${video.video_id}/hqdefault.jpg`}
+                      alt={video.title || "Video thumbnail"}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        // Try maxresdefault as fallback
+                        if (target.src.includes("hqdefault")) {
+                          target.src = `https://img.youtube.com/vi/${video.video_id}/maxresdefault.jpg`
+                        } else {
+                          // If both fail, show placeholder
+                          target.style.display = "none"
+                          const parent = target.parentElement
+                          if (parent && !parent.querySelector(".fallback-icon")) {
+                            const fallback = document.createElement("div")
+                            fallback.className = "fallback-icon w-full h-full flex items-center justify-center bg-muted"
+                            fallback.innerHTML = '<div class="text-4xl">📹</div>'
+                            parent.appendChild(fallback)
+                          }
+                        }
+                      }}
+                      onLoad={() => {
+                        console.log(`✅ Thumbnail loaded for video: ${video.video_id}`)
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                      <div className="text-4xl">📹</div>
+                    </div>
+                  )}
 
                   {/* Play overlay */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
@@ -166,7 +196,7 @@ export default function VdmVideosSupabase() {
                     </div>
                   </div>
 
-                  {/* Duration badge (placeholder) */}
+                  {/* Duration badge */}
                   <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
                     <Eye className="w-3 h-3 inline mr-1" />
                     New
