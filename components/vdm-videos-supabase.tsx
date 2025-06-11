@@ -60,11 +60,12 @@ export default function VdmVideosSupabase() {
     fetchVideos()
   }, [])
 
-  const extractVideoId = (url: string) => {
-    if (!url) return null
-    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/)
-    return match ? match[1] : null
-  }
+  // Remove this function entirely:
+  // const extractVideoId = (url: string) => {
+  //   if (!url) return null
+  //   const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/)
+  //   return match ? match[1] : null
+  // }
 
   // Loading State
   if (loading) {
@@ -139,7 +140,6 @@ export default function VdmVideosSupabase() {
       {/* Video Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {videos.map((video, index) => {
-          const youtubeId = video.video_id || extractVideoId(video.url || "")
           return (
             <Card
               key={video.id}
@@ -150,12 +150,12 @@ export default function VdmVideosSupabase() {
                 {/* Thumbnail */}
                 <div className="relative aspect-video bg-muted overflow-hidden rounded-t-lg">
                   <img
-                    src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`}
+                    src={`https://img.youtube.com/vi/${video.video_id}/hqdefault.jpg`}
                     alt={video.title || "Video thumbnail"}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement
-                      target.src = "/placeholder.svg?height=192&width=320"
+                      target.src = `https://img.youtube.com/vi/${video.video_id}/maxresdefault.jpg`
                     }}
                   />
 
@@ -189,7 +189,7 @@ export default function VdmVideosSupabase() {
                     className="w-full bg-ratels-red text-white hover:bg-ratels-red/90 transition-all duration-200 group"
                   >
                     <a
-                      href={video.url || `https://www.youtube.com/watch?v=${youtubeId}`}
+                      href={video.url || `https://www.youtube.com/watch?v=${video.video_id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
