@@ -1,13 +1,13 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { AlertCircle, Loader2 } from "lucide-react"
+import { AlertCircle, Loader2, Shield } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function AuthForm() {
   const [email, setEmail] = useState("")
@@ -28,9 +28,8 @@ export default function AuthForm() {
         : await supabase.auth.signInWithPassword({ email, password })
 
       if (error) {
-        // Handle specific error types
         if (error.message.includes("security purposes") || error.message.includes("rate")) {
-          setErrorMsg("You're trying too fast. Please wait a minute and try again.")
+          setErrorMsg("Too many attempts. Please wait a minute and try again.")
         } else if (error.message.includes("Invalid login credentials")) {
           setErrorMsg("Invalid email or password. Please check your credentials.")
         } else if (error.message.includes("Email not confirmed")) {
@@ -62,57 +61,82 @@ export default function AuthForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white border border-gray-200 shadow-lg">
-        <CardContent className="p-8">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+
+      <Card className="w-full max-w-md bg-background border-border shadow-xl animate-fade-in">
+        <CardContent className="p-8 space-y-8">
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">RATEL Movement</h1>
-            <h2 className="text-xl font-semibold text-gray-700 mb-2">{isSignup ? "Create Account" : "Welcome Back"}</h2>
-            <p className="text-gray-600 text-sm">{isSignup ? "Join the RATEL community" : "Sign in to your account"}</p>
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center space-x-3">
+              <div className="w-12 h-12 bg-ratels-red rounded-xl flex items-center justify-center">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">RATELS</h1>
+                <div className="w-full h-1 bg-ratels-red rounded-full"></div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-foreground">{isSignup ? "Join the Movement" : "Welcome Back"}</h2>
+              <p className="text-muted-foreground text-sm">
+                {isSignup ? "Create your RATELS account" : "Sign in to access VDM content"}
+              </p>
+            </div>
           </div>
 
           {/* Form */}
           <div className="space-y-4">
-            <div>
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium text-foreground">
+                Email Address
+              </label>
               <Input
+                id="email"
                 type="email"
-                placeholder="Email address"
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-ratels-red focus:border-ratels-red"
                 disabled={loading}
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
+              <label htmlFor="password" className="text-sm font-medium text-foreground">
+                Password
+              </label>
               <Input
+                id="password"
                 type="password"
-                placeholder="Password"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:ring-ratels-red focus:border-ratels-red"
                 disabled={loading}
               />
             </div>
 
             {/* Error Message */}
             {errorMsg && (
-              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-                <p className="text-red-700 text-sm">{errorMsg}</p>
+              <div className="flex items-start space-x-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg animate-fade-in">
+                <AlertCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
+                <p className="text-destructive text-sm">{errorMsg}</p>
               </div>
             )}
 
             {/* Success Message */}
             {successMsg && (
-              <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+              <div className="flex items-start space-x-2 p-3 bg-ratels-red/10 border border-ratels-red/20 rounded-lg animate-fade-in">
+                <div className="w-5 h-5 bg-ratels-red rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
                   <div className="w-2 h-2 bg-white rounded-full"></div>
                 </div>
-                <p className="text-green-700 text-sm">{successMsg}</p>
+                <p className="text-ratels-red text-sm">{successMsg}</p>
               </div>
             )}
 
@@ -120,12 +144,12 @@ export default function AuthForm() {
             <Button
               onClick={handleAuth}
               disabled={loading || !email || !password}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-ratels-red text-white hover:bg-ratels-red/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center space-x-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Please wait...
+                  <span>Please wait...</span>
                 </div>
               ) : isSignup ? (
                 "Create Account"
@@ -135,8 +159,8 @@ export default function AuthForm() {
             </Button>
 
             {/* Toggle Sign Up / Sign In */}
-            <div className="text-center pt-4 border-t border-gray-200">
-              <p className="text-gray-600 text-sm">
+            <div className="text-center pt-4 border-t border-border">
+              <p className="text-muted-foreground text-sm">
                 {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
                 <button
                   onClick={() => {
@@ -144,7 +168,7 @@ export default function AuthForm() {
                     setErrorMsg("")
                     setSuccessMsg("")
                   }}
-                  className="text-blue-600 hover:text-blue-700 font-medium underline"
+                  className="text-ratels-red hover:text-ratels-red/80 font-medium underline transition-colors duration-200"
                   disabled={loading}
                 >
                   {isSignup ? "Sign In" : "Sign Up"}
@@ -154,8 +178,10 @@ export default function AuthForm() {
           </div>
 
           {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-            <p className="text-xs text-gray-500">By continuing, you agree to our Terms of Service and Privacy Policy</p>
+          <div className="text-center pt-4 border-t border-border">
+            <p className="text-xs text-muted-foreground">
+              By continuing, you agree to our Terms of Service and Privacy Policy
+            </p>
           </div>
         </CardContent>
       </Card>
